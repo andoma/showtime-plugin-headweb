@@ -1,0 +1,12 @@
+{
+  "type": "javascript",
+  "id": "headweb",
+  "file": "headweb.js",
+  "showtimeVersion": "3.1",
+  "version": "1.0",
+  "author": "Andreas Öman",
+  "title": "Headweb",
+  "icon": "headweb_square.png",
+  "synopsis": "Headweb online video",
+  "description": "<p>Headweb is a Swedish online video store.<p>For more information, visit <a href=\"http://www.headweb.com\">http://www.headweb.com</a>"
+}
