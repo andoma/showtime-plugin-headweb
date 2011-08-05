@@ -26,7 +26,7 @@
   var loggedIn = false;
 
   plugin.createService("Headweb", PREFIX + "start", "video", true,
-		       plugin.config.path + "headweb_square.png");
+		       plugin.path + "headweb_square.png");
 
   /**
    * Headweb API KEY.
@@ -245,7 +245,7 @@
   // List all genres
   plugin.addURI(PREFIX + "genres", function(page) {
     page.metadata.title = "Genres";
-    page.metadata.logo = plugin.config.path + "headweb_square.png";
+    page.metadata.logo = plugin.path + "headweb_square.png";
     page.type = "directory";
 
     var doc = request("/genre/filter(-adult,stream)");
@@ -263,7 +263,7 @@
   // Browse a genre
   plugin.addURI(PREFIX + "genre:([0-9]*):(.*)", function(page, id, name) {
     page.metadata.title = name;
-    page.metadata.logo = plugin.config.path + "headweb_square.png";
+    page.metadata.logo = plugin.path + "headweb_square.png";
     requestContents(page, "/genre/" + id + "/filter(-adult,stream)");
   });
 
@@ -386,7 +386,7 @@
     page.type = "directory";
     page.contents = "items";
     page.loading = false;
-    page.metadata.logo = plugin.config.path + "headweb_square.png";
+    page.metadata.logo = plugin.path + "headweb_square.png";
     page.metadata.title = "Headweb";
   });
 
@@ -398,7 +398,7 @@
       return;
     }
     page.metadata.title = "My watchlist";
-    page.metadata.logo = plugin.config.path + "headweb_square.png";
+    page.metadata.logo = plugin.path + "headweb_square.png";
     requestContents(page, "/user/watchlist");
   });
 
@@ -406,7 +406,7 @@
 
   // Search hook
   plugin.addSearcher(
-    "Headweb movies", plugin.config.path + "headweb_icon.png",
+    "Headweb movies", plugin.path + "headweb_icon.png",
     function(page, query) {
       requestContents(page, "/search/" + showtime.paramEscape(query));
     });
