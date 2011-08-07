@@ -74,8 +74,8 @@
 
     while(1) {
 
-      var credentials = showtime.getAuthCredentials("headweb:",
-	"Headweb streaming service", reason, do_query);
+      var credentials = plugin.getAuthCredentials("Headweb streaming service",
+	reason, do_query);
     
       if(!credentials) {
 	if(query && !do_query) {
