@@ -293,6 +293,7 @@
     page.source = "videoparams:" + showtime.JSONEncode({
       title: doc.content.name,
       subtitles: subtitles,
+      canonicalUrl: PREFIX + "stream:" + id,
       sources: [{
 	url: rtmpurl
       }]
