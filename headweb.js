@@ -117,17 +117,15 @@
     return new XML(v.toString());
   }
 
-  function bestCover(content) {
-    var best = null;
-    var bestArea = 0;
+  function imageSet(content) {
+    var images = [];
     for each (var c in content.cover) {
-      var a = c.@width * c.@height;
-      if(a > bestArea) {
-	best = c;
-	bestArea = a;
-      }
+      images.push({
+	width: parseInt(c.@width),
+	height: parseInt(c.@height),
+	url: c});
     }
-    return best;
+    return "imageset:" + showtime.JSONEncode(images);
   }
 
 
@@ -173,7 +171,7 @@
 
 	var metadata = {
 	  title: c.name,
-	  icon: bestCover(c),
+	  icon: imageSet(c),
 	  description: new showtime.RichText(c.plot),
 	  rating: parseFloat(c.rating) / 5.0
 	};
@@ -312,7 +310,7 @@
     }
 
     page.metadata.title = doc.content.name + ' (' + doc.content.year + ')';
-    page.metadata.icon = bestCover(doc.content);
+    page.metadata.icon = imageSet(doc.content);
 
     page.appendPassiveItem("label", merge(doc.content.genre))
     page.appendPassiveItem("rating", parseFloat(doc.content.rating) / 5.0);
