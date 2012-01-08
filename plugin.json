@@ -8,5 +8,6 @@
   "title": "Headweb",
   "icon": "headweb_square.png",
   "synopsis": "Headweb online video",
-  "description": "<p>Headweb is a Swedish online video store.<p>For more information, visit <a href=\"http://www.headweb.com\">http://www.headweb.com</a>"
+  "description": "<p>Headweb is a Swedish online video store.<p>For more information, visit <a href=\"http://www.headweb.com\">http://www.headweb.com</a>",
+  "homepage":"https://github.com/andoma/showtime-plugin-headweb"
 }
