@@ -269,7 +269,11 @@
   // Play a stream
   plugin.addURI(PREFIX + "stream:([0-9]*)", function(page, id) {
 
-    var doc = request("/stream/" + id);
+    var v = showtime.httpGet("https://api.headweb.com/v4/stream/" + id, {
+      apikey: APIKEY,
+      authmode: 'player' // should be changed to 'row'
+    });
+    var doc = new XML(v.toString());
 
     // Construct dict with subtitle URLs
 
