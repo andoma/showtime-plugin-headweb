@@ -99,6 +99,7 @@
       
       if(doc.error.length()) {
 	reason = doc.error;
+	do_query = true;
 	continue;
       }
       showtime.trace('Logged in to Headweb as user: ' + credentials.username);
