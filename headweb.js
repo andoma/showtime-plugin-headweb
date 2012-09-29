@@ -404,7 +404,10 @@
     setMovieStatus(isRented(stream.@id));
 
     function setMovieStatus(available) {
-      rentButton.enabled = !available;
+      if (available)
+	  rentButton.disable();
+      else
+	  rentButton.enable();
     }
   });
 
