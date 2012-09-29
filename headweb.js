@@ -205,10 +205,10 @@
     if(login(false))
       return false;
 
-    var response = request("/user/rentals", 0, 200);
+    var response = request("/user/rentals/active", 0, 200);
 
     for each (var item in response.list.item) {
-      if (item.@id == id && item.state != 'expired')
+      if (item.@id == id)
 	return true;
     }
 
@@ -404,7 +404,10 @@
     setMovieStatus(isRented(stream.@id));
 
     function setMovieStatus(available) {
-      rentButton.enabled = !available;
+      if (available)
+	  rentButton.disable();
+      else
+	  rentButton.enable();
     }
   });
 
