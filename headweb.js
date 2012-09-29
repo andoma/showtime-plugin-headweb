@@ -242,7 +242,7 @@
   }
 
   function getFilter() {
-    var filter = "stream";
+    var filter = "stream[flash]";
     if (service.noadult)
 	filter += ",-adult";
     return filter;
