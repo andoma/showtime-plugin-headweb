@@ -361,6 +361,10 @@
       page.appendPassiveItem("label", showtime.durationToString(d), {
 	title: 'Duration'});
 
+    page.appendPassiveItem("label", merge(doc.content.year), {
+      title: 'Year'
+    });
+
     page.appendPassiveItem("label", merge(doc.content.actor.person), {
       title: 'Actors'
     });
