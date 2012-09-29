@@ -181,7 +181,7 @@
 	  title: c.name,
 	  icon: imageSet(c),
 	  description: new showtime.RichText(c.plot),
-	  rating: parseFloat(c.rating) / 5.0
+	  rating: parseFloat(c.rating) * 20
 	};
 
 	var runtime = parseInt(stream.runtime);
@@ -242,7 +242,7 @@
   }
 
   function getFilter() {
-    var filter = "stream";
+    var filter = "stream[flash]";
     if (service.noadult)
 	filter += ",-adult";
     return filter;
@@ -360,6 +360,10 @@
     if(d > 0)
       page.appendPassiveItem("label", showtime.durationToString(d), {
 	title: 'Duration'});
+
+    page.appendPassiveItem("label", merge(doc.content.year), {
+      title: 'Year'
+    });
 
     page.appendPassiveItem("label", merge(doc.content.actor.person), {
       title: 'Actors'
