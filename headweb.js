@@ -248,6 +248,33 @@
     return filter;
   }
 
+  // Latests additions
+  plugin.addURI(PREFIX + "latest", function(page) {
+    page.metadata.title = "Latest";
+    page.metadata.logo = plugin.path + "headweb_square.png";
+    page.type = "directory";
+    requestContents(page, "/content/latest/filter(" + getFilter() + ")");
+    page.loading = false;
+  });
+
+  // Top rated
+  plugin.addURI(PREFIX + "toprated", function(page) {
+    page.metadata.title = "Top rated";
+    page.metadata.logo = plugin.path + "headweb_square.png";
+    page.type = "directory";
+    requestContents(page, "/content/toprate/filter(" + getFilter() + ")");
+    page.loading = false;
+  });
+
+  // Top rated
+  plugin.addURI(PREFIX + "bestsell", function(page) {
+    page.metadata.title = "Best sellers";
+    page.metadata.logo = plugin.path + "headweb_square.png";
+    page.type = "directory";
+    requestContents(page, "/content/bestsell/filter(" + getFilter() + ")");
+    page.loading = false;
+  });
+
   // List all genres
   plugin.addURI(PREFIX + "genres", function(page) {
     page.metadata.title = "Genres";
@@ -387,6 +414,17 @@
     page.appendItem("headweb:watchlist", "directory", {
       title: "My watchlist",
       subtype: "favourites"
+    });
+
+    page.appendItem("headweb:latest", "directory", {
+      title: "Latest additions"});
+
+    page.appendItem("headweb:toprated", "directory", {
+      title: "Top rated"
+    });
+
+    page.appendItem("headweb:bestsell", "directory", {
+      title: "Best sellers"
     });
 
     page.appendItem("headweb:genres", "directory", {
