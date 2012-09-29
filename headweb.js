@@ -4,6 +4,7 @@
  *  API docs available here: http://opensource.headweb.com/api
  *
  *  Copyright (C) 2010 Andreas Öman
+ *  Copyright (C) 2012 Henrik Andersson
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,8 +26,14 @@
 
   var loggedIn = false;
 
-  plugin.createService("Headweb", PREFIX + "start", "video", true,
-		       plugin.path + "headweb_square.png");
+  var service = plugin.createService("Headweb", PREFIX + "start", "video", true,
+				     plugin.path + "headweb_square.png");
+
+  var settings = plugin.createSettings("Headweb", plugin.path + "headweb_square.png",
+				       "Headweb: Online video");
+  settings.createBool("noadult", "Hide adult content", true, function(v) {
+      service.noadult = v;
+  });
 
   /**
    * Headweb API KEY.
@@ -234,12 +241,12 @@
     return true;
   }
 
-
-
-
-
-
-
+  function getFilter() {
+    var filter = "stream";
+    if (service.noadult)
+	filter += ",-adult";
+    return filter;
+  }
 
   // List all genres
   plugin.addURI(PREFIX + "genres", function(page) {
@@ -247,7 +254,7 @@
     page.metadata.logo = plugin.path + "headweb_square.png";
     page.type = "directory";
 
-    var doc = request("/genre/filter(-adult,stream)");
+    var doc = request("/genre/filter(" + getFilter() + ")");
 
     for each (var genre in doc.list.genre) {
       page.appendItem(PREFIX + "genre:" + genre.@id + ":" + genre,
@@ -263,7 +270,7 @@
   plugin.addURI(PREFIX + "genre:([0-9]*):(.*)", function(page, id, name) {
     page.metadata.title = name;
     page.metadata.logo = plugin.path + "headweb_square.png";
-    requestContents(page, "/genre/" + id + "/filter(-adult,stream)");
+    requestContents(page, "/genre/" + id + "/filter(" + getFilter() + ")");
   });
 
 
