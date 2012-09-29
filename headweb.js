@@ -181,7 +181,7 @@
 	  title: c.name,
 	  icon: imageSet(c),
 	  description: new showtime.RichText(c.plot),
-	  rating: parseFloat(c.rating) / 5.0
+	  rating: parseFloat(c.rating) * 20
 	};
 
 	var runtime = parseInt(stream.runtime);
