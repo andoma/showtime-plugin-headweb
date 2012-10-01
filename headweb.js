@@ -164,32 +164,56 @@
     return r;
   }
 
+  function addContentToPage(page, content) {
+    var stream = bestStream(content);
+    var metadata = {
+      title: content.name,
+      icon: imageSet(content),
+      description: new showtime.RichText(content.plot),
+      rating: parseFloat(content.rating) * 20
+    };
 
+    var runtime = parseInt(stream.runtime);
+    if(runtime > 0)
+      metadata.runtime = runtime;
+
+    page.appendItem(PREFIX + "video:" + stream.@id,
+		    "video", metadata);
+  }
+
+  function requestRentals(page) {
+    var offset = 0;
+    if(login(false))
+      return;
+
+    function loader() {
+      var doc = request("/user/rentals/active", offset, 50);
+      page.entries = doc.list.@items;
+
+      for each (var item in doc.list.item) {
+        offset++;
+	var contentIdURI = "/content/" + (parseInt(item.@id)+1);
+	var ldoc = request(contentIdURI, 0, 50);
+	addContentToPage(page, ldoc.content);
+      }
+      return offset < page.entries;
+    }
+
+    page.type = "directory";
+    loader();
+    page.loading = false;
+    page.paginator = loader;
+  }
 
   function requestContents(page, url) {
     var offset = 0;
-
 
     function loader() {
       var doc = request(url, offset, 50);
       page.entries = doc.list.@items;
       for each (var c in doc.list.content) {
 	offset++;
-	var stream = bestStream(c);
-
-	var metadata = {
-	  title: c.name,
-	  icon: imageSet(c),
-	  description: new showtime.RichText(c.plot),
-	  rating: parseFloat(c.rating) * 20
-	};
-
-	var runtime = parseInt(stream.runtime);
-	if(runtime > 0) 
-	  metadata.runtime = runtime;
-	
-	page.appendItem(PREFIX + "video:" + stream.@id,
-			"video", metadata);
+	addContentToPage(page, c);
       }
       return offset < page.entries;
     }
@@ -254,6 +278,15 @@
     page.metadata.logo = plugin.path + "headweb_square.png";
     page.type = "directory";
     requestContents(page, "/content/latest/filter(" + getFilter() + ")");
+    page.loading = false;
+  });
+
+  // Active Rentals
+  plugin.addURI(PREFIX + "rentals", function(page) {
+    page.metadata.title = "Active rentals";
+    page.metadata.logo = plugin.path + "headweb_square.png";
+    page.type = "directory";
+    requestRentals(page);
     page.loading = false;
   });
 
@@ -423,16 +456,17 @@
       subtype: "favourites"
     });
 
+    page.appendItem("headweb:rentals", "directory", {
+      title: "Active Rentals"});
+
     page.appendItem("headweb:latest", "directory", {
       title: "Latest additions"});
 
     page.appendItem("headweb:toprated", "directory", {
-      title: "Top rated"
-    });
+      title: "Top rated"});
 
     page.appendItem("headweb:bestsell", "directory", {
-      title: "Best sellers"
-    });
+      title: "Best sellers"});
 
     page.appendItem("headweb:genres", "directory", {
       title: "Genres",
