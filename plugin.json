@@ -3,11 +3,12 @@
   "id": "headweb",
   "file": "headweb.js",
   "showtimeVersion": "4.1.22",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "author": "Andreas Öman",
   "title": "Headweb",
   "icon": "headweb_square.png",
   "synopsis": "Headweb online video",
+  "category": "video",
   "description": "<p>Headweb is a Swedish online video store.<p>For more information, visit <a href=\"http://www.headweb.com\">http://www.headweb.com</a>",
   "homepage":"https://github.com/andoma/showtime-plugin-headweb"
 }
