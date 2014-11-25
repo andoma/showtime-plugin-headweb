@@ -20,6 +20,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+var XML = require('showtime/xml');
+
 
 (function(plugin) {
   var PREFIX = "headweb:"
@@ -95,16 +97,20 @@
       if(credentials.rejected)
 	return "Rejected by user";
 
-      var v = showtime.httpPost("https://api.headweb.com/v4/user/login", {
-	username: credentials.username,
-	password: credentials.password
-      }, {
-	apikey: APIKEY
+      var v = showtime.httpReq("https://api.headweb.com/v4/user/login", {
+
+        postdata: {
+	  username: credentials.username,
+	  password: credentials.password
+        },
+
+        args: {
+	  apikey: APIKEY
+        }
       });
-      
-      var doc = new XML(v.toString());
-      
-      if(doc.error.length()) {
+
+      var doc = XML.parse(v).response;
+      if(doc.error) {
 	reason = doc.error;
 	do_query = true;
 	continue;
@@ -117,21 +123,24 @@
 
 
   function request(path, offset, limit) {
-    var v = showtime.httpGet("https://api.headweb.com/v4" + path, {
-      apikey: APIKEY,
-      offset: offset,
-      limit: limit
+    var v = showtime.httpReq("https://api.headweb.com/v4" + path, {
+      args: {
+        apikey: APIKEY,
+        offset: offset,
+        limit: limit
+      }
     });
-    return new XML(v.toString());
+    return XML.parse(v).response;
   }
 
-  function imageSet(content) {
+  function imageSet(covers) {
     var images = [];
-    for each (var c in content.cover) {
+    for(var i = 0; i < covers.length; i++) {
+      var c = covers[i];
       images.push({
-	width: parseInt(c.@width),
-	height: parseInt(c.@height),
-	url: c});
+	width: parseInt(c["@width"]),
+	height: parseInt(c["@height"]),
+	url: c.toString()});
     }
     return "imageset:" + showtime.JSONEncode(images);
   }
@@ -140,10 +149,17 @@
   function bestTrailer(content) {
     var best = null;
     var bestRate = 0;
-    for each (var c in content.videoclip.bitrate) {
-      if(c.@rate > bestRate) {
+
+    if(!content.videoclip)
+      return null;
+
+    var bitrates = content.videoclip.filterNodes('bitrate');
+    for (var i = 0; i < bitrates.length; i++) {
+      var c = bitrates[i];
+      var rate = parseInt(c["@rate"]);
+      if(rate > bestRate) {
 	best = c.url;
-	bestRate = c.@rate;
+	bestRate = rate;
       }
     }
     return best;
@@ -154,21 +170,15 @@
   }
 
 
-  function merge(list) {
-    var prefix = "";
-    var r = "";
-    for each (v in list) {
-      r += prefix + v;
-      prefix = ", ";
-    }
-    return r;
+  function merge(doc, name) {
+    return doc.filterNodes(name).join(", ");
   }
 
   function addContentToPage(page, content) {
     var stream = bestStream(content);
     var metadata = {
       title: content.name,
-      icon: imageSet(content),
+      icon: imageSet(content.filterNodes('cover')),
       description: new showtime.RichText(content.plot),
       rating: parseFloat(content.rating) * 20
     };
@@ -177,7 +187,7 @@
     if(runtime > 0)
       metadata.runtime = runtime;
 
-    page.appendItem(PREFIX + "video:" + stream.@id,
+    page.appendItem(PREFIX + "video:" + stream["@id"],
 		    "video", metadata);
   }
 
@@ -188,13 +198,22 @@
 
     function loader() {
       var doc = request("/user/rentals/active", offset, 50);
-      page.entries = doc.list.@items;
+      if(!doc.list)
+        return false;
 
-      for each (var item in doc.list.item) {
+      page.entries = parseInt(doc.list["@items"]);
+
+      for(var i = 0; i < doc.list.length; i++) {
+        var item = doc.list[i];
         offset++;
-	var contentIdURI = "/content/" + (parseInt(item.@id)+1);
-	var ldoc = request(contentIdURI, 0, 50);
-	addContentToPage(page, ldoc.content);
+	var contentIdURI = "/content/" + (parseInt(item["@id"])+1);
+        try {
+	  var ldoc = request(contentIdURI, 0, 50);
+	  addContentToPage(page, ldoc.content);
+        } catch(e) {
+          console.log("Unable to add " + contentIdURI + " -- " + e);
+        }
+
       }
       return offset < page.entries;
     }
@@ -210,8 +229,12 @@
 
     function loader() {
       var doc = request(url, offset, 50);
-      page.entries = doc.list.@items;
-      for each (var c in doc.list.content) {
+      if(!doc.list)
+        return false;
+
+      page.entries = parseInt(doc.list["@items"]);
+      for (var i = 0; i < doc.list.length; i++) {
+        var c = doc.list[i];
 	offset++;
 	addContentToPage(page, c);
       }
@@ -230,9 +253,10 @@
       return false;
 
     var response = request("/user/rentals/active", 0, 200);
-
-    for each (var item in response.list.item) {
-      if (item.@id == id)
+    var items = response.list.filterNodes('item');
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      if(item["@id"] == id)
 	return true;
     }
 
@@ -248,15 +272,18 @@
 			 price, true, true))
       return false;
 
-    var v = showtime.httpGet("https://api.headweb.com/v4/purchase/0", {
-      apikey: APIKEY,
-      payment: 'account',
-      item: item,
-      total: rawprice})
+    var v = showtime.httpReq("https://api.headweb.com/v4/purchase/0", {
+      args: {
+        apikey: APIKEY,
+        payment: 'account',
+        item: item,
+        total: rawprice
+      }
+    })
 
-    var response = new XML(v.toString());
-
-    if(response.purchase.failed.length()) {
+    var response = XML.parse(v).response;
+    response.dump();
+    if(response.purchase.failed) {
       showtime.message('Rentail failed:\n' + response.purchase.failed,
 		       true, false);
       return false;
@@ -264,6 +291,17 @@
 
     return true;
   }
+
+  function getPersons(doc, type) {
+    var items = doc.filterNodes(type);
+    var actors = [];
+
+    for(var i = 0; i < items.length; i++) {
+      actors.push(items[i].person.toString());
+    }
+    return actors.join(", ");
+  }
+
 
   function getFilter() {
     var filter = "stream[flash]";
@@ -316,10 +354,13 @@
 
     var doc = request("/genre/filter(" + getFilter() + ")");
 
-    for each (var genre in doc.list.genre) {
-      page.appendItem(PREFIX + "genre:" + genre.@id + ":" + genre,
+    var genres = doc.list.filterNodes('genre');
+
+    for(var i = 0; i < genres.length; i++) {
+      var genre = genres[i];
+      page.appendItem(PREFIX + "genre:" + genre["@id"] + ":" + genre,
 		      "directory", {
-			title:genre
+			title:genre.toString()
 		      });
     }
     page.loading = false;
@@ -341,16 +382,18 @@
       apikey: APIKEY,
       authmode: 'player' // should be changed to 'row'
     });
-    var doc = new XML(v.toString());
-
+    print(v);
+    var doc = XML.parse(v.toString()).response;
     // Construct dict with subtitle URLs
 
     var subtitles = []
+    var xmlsubs = doc.content.stream.filterNodes('subtitle');
+    for (var i = 0; i < xmlsubs.length; i++) {
+      var sub = xmlsubs[i];
 
-    for each (var sub in doc.content.stream.subtitle) {
       subtitles.push({
 	url: sub.url,
-	language: code2lang(sub.language.@code)
+	language: code2lang(sub.language["@code"])
       });
     }
 
@@ -376,15 +419,15 @@
   plugin.addURI(PREFIX + "video:([0-9]*)", function(page, id) {
  
     var doc = request("/stream/" + id);
-    if(doc.error.length()) {
+    if(doc.error) {
       page.error(doc.error);
       return;
     }
 
     page.metadata.title = doc.content.name + ' (' + doc.content.year + ')';
-    page.metadata.icon = imageSet(doc.content);
+    page.metadata.icon = imageSet(doc.content.filterNodes('cover'));
 
-    page.appendPassiveItem("label", merge(doc.content.genre))
+    page.appendPassiveItem("label", merge(doc.content, 'genre'))
     page.appendPassiveItem("rating", parseFloat(doc.content.rating) / 5.0);
 
     page.appendPassiveItem("divider")
@@ -394,15 +437,15 @@
       page.appendPassiveItem("label", showtime.durationToString(d), {
 	title: 'Duration'});
 
-    page.appendPassiveItem("label", merge(doc.content.year), {
+    page.appendPassiveItem("label", merge(doc.content, 'year'), {
       title: 'Year'
     });
 
-    page.appendPassiveItem("label", merge(doc.content.actor.person), {
+    page.appendPassiveItem("label", getPersons(doc.content, 'actor'), {
       title: 'Actors'
     });
 
-    page.appendPassiveItem("label", merge(doc.content.director.person), {
+    page.appendPassiveItem("label", getPersons(doc.content, 'director'), {
       title: 'Director'
     });
 
@@ -434,18 +477,19 @@
 
 
     page.onEvent('rent', function() {
-      setMovieStatus(rent(stream.@id, stream.price.@raw,
+      setMovieStatus(rent(stream["@id"], stream.price["@raw"],
 			 doc.content.name, stream.price));
     });
-    
-    setMovieStatus(isRented(stream.@id));
 
-    function setMovieStatus(available) {
-      if (available)
-	  rentButton.disable();
+    setMovieStatus(isRented(stream["@id"]));
+
+    function setMovieStatus(isRented) {
+      if (isRented)
+	rentButton.disable();
       else
-	  rentButton.enable();
+	rentButton.enable();
     }
+
   });
 
   // Start page

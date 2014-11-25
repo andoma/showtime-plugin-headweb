@@ -1,9 +1,9 @@
 {
-  "type": "javascript",
+  "type": "ecmascript",
   "id": "headweb",
   "file": "headweb.js",
-  "showtimeVersion": "4.1.22",
-  "version": "1.5.3",
+  "showtimeVersion": "4.7.515",
+  "version": "2.0",
   "author": "Andreas Öman",
   "title": "Headweb",
   "icon": "headweb_square.png",
