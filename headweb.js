@@ -133,6 +133,32 @@ var XML = require('showtime/xml');
     return XML.parse(v).response;
   }
 
+
+  function asyncRequest(path, offset, limit, callback) {
+    var v = showtime.httpReq("https://api.headweb.com/v4" + path, {
+      args: {
+        apikey: APIKEY,
+        offset: offset,
+        limit: limit
+      },
+      debug: true
+    }, function(err, response) {
+      if(err) {
+        callback(null);
+      } else {
+        print("no fail");
+        var doc;
+        try {
+          doc = XML.parse(response).response;
+        } catch(e) {
+          callback(null);
+          return;
+        }
+        callback(doc);
+      }
+    });
+  }
+
   function imageSet(covers) {
     var images = [];
     for(var i = 0; i < covers.length; i++) {
@@ -228,23 +254,27 @@ var XML = require('showtime/xml');
     var offset = 0;
 
     function loader() {
-      var doc = request(url, offset, 50);
-      if(!doc.list)
-        return false;
+      asyncRequest(url, offset, 50, function(doc) {
+        page.loading = false;
+        print("doc=", doc);
+        if(!doc.list) {
+          page.haveMore(false);
+          return;
+        }
 
-      page.entries = parseInt(doc.list["@items"]);
-      for (var i = 0; i < doc.list.length; i++) {
-        var c = doc.list[i];
-	offset++;
-	addContentToPage(page, c);
-      }
-      return offset < page.entries;
+        page.entries = parseInt(doc.list["@items"]);
+        for (var i = 0; i < doc.list.length; i++) {
+          var c = doc.list[i];
+	  offset++;
+	  addContentToPage(page, c);
+        }
+        page.haveMore(offset < page.entries);
+      });
     }
 
     page.type = "directory";
-    loader();
-    page.loading = false;
     page.paginator = loader;
+    loader();
   }
 
 
