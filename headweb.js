@@ -1,9 +1,9 @@
 /*
- *  Headweb plugin
+ *  Headweb plugin for Movian Media Center
  *
  *  API docs available here: http://opensource.headweb.com/api
  *
- *  Copyright (C) 2010 Andreas Öman
+ *  Copyright (C) 2010-2015 Andreas Öman
  *  Copyright (C) 2012 Henrik Andersson
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -140,8 +140,7 @@ var XML = require('showtime/xml');
         apikey: APIKEY,
         offset: offset,
         limit: limit
-      },
-      debug: true
+      }
     }, function(err, response) {
       if(err) {
         callback(null);
@@ -342,6 +341,7 @@ var XML = require('showtime/xml');
 
   // Latests additions
   plugin.addURI(PREFIX + "latest", function(page) {
+    page.loading = true;
     page.metadata.title = "Latest";
     page.metadata.logo = plugin.path + "headweb_square.png";
     page.type = "directory";
@@ -351,6 +351,7 @@ var XML = require('showtime/xml');
 
   // Active Rentals
   plugin.addURI(PREFIX + "rentals", function(page) {
+    page.loading = true;
     page.metadata.title = "Active rentals";
     page.metadata.logo = plugin.path + "headweb_square.png";
     page.type = "directory";
@@ -360,6 +361,7 @@ var XML = require('showtime/xml');
 
   // Top rated
   plugin.addURI(PREFIX + "toprated", function(page) {
+    page.loading = true;
     page.metadata.title = "Top rated";
     page.metadata.logo = plugin.path + "headweb_square.png";
     page.type = "directory";
@@ -369,6 +371,7 @@ var XML = require('showtime/xml');
 
   // Top rated
   plugin.addURI(PREFIX + "bestsell", function(page) {
+    page.loading = true;
     page.metadata.title = "Best sellers";
     page.metadata.logo = plugin.path + "headweb_square.png";
     page.type = "directory";
@@ -378,6 +381,7 @@ var XML = require('showtime/xml');
 
   // List all genres
   plugin.addURI(PREFIX + "genres", function(page) {
+    page.loading = true;
     page.metadata.title = "Genres";
     page.metadata.logo = plugin.path + "headweb_square.png";
     page.type = "directory";
@@ -399,15 +403,17 @@ var XML = require('showtime/xml');
 
   // Browse a genre
   plugin.addURI(PREFIX + "genre:([0-9]*):(.*)", function(page, id, name) {
+    page.loading = true;
     page.metadata.title = name;
     page.metadata.logo = plugin.path + "headweb_square.png";
     requestContents(page, "/genre/" + id + "/filter(" + getFilter() + ")");
+    page.loading = false;
   });
 
 
   // Play a stream
   plugin.addURI(PREFIX + "stream:([0-9]*)", function(page, id) {
-
+    page.loading = true;
     var v = showtime.httpGet("https://api.headweb.com/v4/stream/" + id, {
       apikey: APIKEY,
       authmode: 'player' // should be changed to 'row'
@@ -417,6 +423,10 @@ var XML = require('showtime/xml');
     // Construct dict with subtitle URLs
 
     var subtitles = []
+    if (doc.error) {
+      page.error(doc.error);
+      return;
+    }
     var xmlsubs = doc.content.stream.filterNodes('subtitle');
     for (var i = 0; i < xmlsubs.length; i++) {
       var sub = xmlsubs[i];
@@ -442,12 +452,13 @@ var XML = require('showtime/xml');
       }]
     });
     page.type = "video";
+    page.loading = false;
   });
 
 
   // Video launch
   plugin.addURI(PREFIX + "video:([0-9]*)", function(page, id) {
- 
+    page.loading = true; 
     var doc = request("/stream/" + id);
     if(doc.error) {
       page.error(doc.error);
@@ -483,11 +494,18 @@ var XML = require('showtime/xml');
 
     page.appendPassiveItem("bodytext", new showtime.RichText(doc.content.plot));
 
-
     var trailerURL = bestTrailer(doc.content);
     var stream = bestStream(doc.content);
 
     if(trailerURL) {
+      trailerURL = "videoparams:" + showtime.JSONEncode({
+            title: doc.content.name + ' - Trailer',
+            sources: [{
+                url: trailerURL
+            }],
+            no_subtitle_scan: true
+        });
+
       page.appendAction("navopen", trailerURL, true, {
 	title: "Watch trailer"
       });
@@ -519,28 +537,32 @@ var XML = require('showtime/xml');
       else
 	rentButton.enable();
     }
-
+    page.loading = false;
   });
 
   // Start page
   plugin.addURI(PREFIX + "start", function(page) {
-
+    page.loading = true;
     page.appendItem("headweb:watchlist", "directory", {
       title: "My watchlist",
       subtype: "favourites"
     });
 
     page.appendItem("headweb:rentals", "directory", {
-      title: "Active Rentals"});
+      title: "Active Rentals"
+    });
 
     page.appendItem("headweb:latest", "directory", {
-      title: "Latest additions"});
+      title: "Latest additions"
+    });
 
     page.appendItem("headweb:toprated", "directory", {
-      title: "Top rated"});
+      title: "Top rated"
+    });
 
     page.appendItem("headweb:bestsell", "directory", {
-      title: "Best sellers"});
+      title: "Best sellers"
+    });
 
     page.appendItem("headweb:genres", "directory", {
       title: "Genres",
@@ -566,11 +588,8 @@ var XML = require('showtime/xml');
     requestContents(page, "/user/watchlist");
   });
 
-
-
   // Search hook
-  plugin.addSearcher(
-    "Headweb movies", plugin.path + "headweb_icon.png",
+  plugin.addSearcher("Headweb movies", plugin.path + "headweb_icon.png",
     function(page, query) {
       requestContents(page, "/search/" + showtime.paramEscape(query));
     });
