@@ -145,7 +145,6 @@ var XML = require('showtime/xml');
       if(err) {
         callback(null);
       } else {
-        print("no fail");
         var doc;
         try {
           doc = XML.parse(response).response;
@@ -255,7 +254,6 @@ var XML = require('showtime/xml');
     function loader() {
       asyncRequest(url, offset, 50, function(doc) {
         page.loading = false;
-        print("doc=", doc);
         if(!doc.list) {
           page.haveMore(false);
           return;
@@ -418,7 +416,6 @@ var XML = require('showtime/xml');
       apikey: APIKEY,
       authmode: 'player' // should be changed to 'row'
     });
-    print(v);
     var doc = XML.parse(v.toString()).response;
     // Construct dict with subtitle URLs
 
